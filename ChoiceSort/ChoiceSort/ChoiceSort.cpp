@@ -5,9 +5,9 @@
 #include <future>
 #include <thread>
 
-static int findMinimum(std::list<int>& l) 
+static void findMinimum(std::list<int>& l, std::promise<int>& min_elem) 
 {
-    return *std::min_element(begin(l), end(l));
+    min_elem.set_value(*std::min_element(begin(l), end(l)));
 }
 
 static void choiceSort(std::list<int>& l, std::promise<std::string> value) 
@@ -16,10 +16,12 @@ static void choiceSort(std::list<int>& l, std::promise<std::string> value)
     {
         auto begin = std::next(l.begin(), j);
         auto end = l.end();
+        std::promise<int> min_elem;
+        std::future<int> result = min_elem.get_future();
         std::list<int> subList;
         subList.splice(subList.begin(), l, begin, end);
-
-        std::future<int> result(std::async(std::launch::async, findMinimum, ref(subList)));
+        
+        std::async(std::launch::async, findMinimum, ref(subList), ref(min_elem));
         int m = result.get();
 
         if (m != *subList.begin()) 
